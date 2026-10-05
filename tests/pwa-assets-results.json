@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-05",
+  "scope": "Static file and URL checks; no real browser installation",
+  "checks": [
+    {
+      "name": "All HTML and manifest icon URLs resolve inside /Teo-Pad/ to real files",
+      "status": "PASS"
+    },
+    {
+      "name": "PWA PNG dimensions, signatures and opaque RGB format match manifest",
+      "status": "PASS"
+    },
+    {
+      "name": "Manifest identity, start URL and scope use the repository subdirectory",
+      "status": "PASS"
+    },
+    {
+      "name": "Application JavaScript is byte-identical to the verified corrected v3.1 source",
+      "status": "PASS"
+    },
+    {
+      "name": "Every required offline icon exists before deployment",
+      "status": "PASS"
+    },
+    {
+      "name": "Exactly one manifest link and one Apple touch icon link",
+      "status": "PASS"
+    }
+  ],
+  "source_hashes": {
+    "index.html": "9e7922a3cf571650fb3345f035a76f8d6c3f958e2b1b074009b1024ba21b2854",
+    "sw.js": "d47ea2e101e0dcbfa9d43db99c687929c5dd346fb471c9816d49677368d5164b",
+    "manifest.json": "2635f363568654de86ad901f3cab7f31e3dc24b66feb9853c8f61cc75cfb3545"
+  }
+}

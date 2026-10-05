@@ -1,0 +1,262 @@
+{
+  "runtime": "v24.19.0",
+  "scope": "Node VM DOM/IDB mocks + real Node Web APIs + real worker_threads; no browser rendering",
+  "cases": [
+    {
+      "name": "B01 cancel opening preserves text and handle",
+      "status": "PASS"
+    },
+    {
+      "name": "B01 read failure preserves text and handle",
+      "status": "PASS"
+    },
+    {
+      "name": "B01 successful open commits all document fields",
+      "status": "PASS"
+    },
+    {
+      "name": "B02 in-flight save keeps newer edit dirty",
+      "status": "PASS"
+    },
+    {
+      "name": "B02 overlapping save requests do not write concurrently",
+      "status": "PASS"
+    },
+    {
+      "name": "B03 legacy draft imported before migration marker",
+      "status": "PASS"
+    },
+    {
+      "name": "B03 failed migration retains originals and no success marker",
+      "status": "PASS"
+    },
+    {
+      "name": "B04 newer fallback wins older IndexedDB record",
+      "status": "PASS"
+    },
+    {
+      "name": "B04 empty draft remains intentionally empty",
+      "status": "PASS"
+    },
+    {
+      "name": "B04 ambiguous legacy stores retained separately",
+      "status": "PASS"
+    },
+    {
+      "name": "B05 delayed file read cannot overwrite newer edit",
+      "status": "PASS"
+    },
+    {
+      "name": "B05 startup locks editor until recovery completes",
+      "status": "PASS"
+    },
+    {
+      "name": "B06 late replacement cannot overwrite new text",
+      "status": "PASS"
+    },
+    {
+      "name": "B07 deleting all content is still dirty and warns on unload",
+      "status": "PASS"
+    },
+    {
+      "name": "B08 failed draft save blocks update activation",
+      "status": "PASS"
+    },
+    {
+      "name": "B09 first controllerchange never reloads without consent",
+      "status": "PASS"
+    },
+    {
+      "name": "B09 approved update persists then activates and permits reload",
+      "status": "PASS"
+    },
+    {
+      "name": "B10 invalid UTF-8 rejected without replacement characters",
+      "status": "PASS"
+    },
+    {
+      "name": "B10 UTF-8 BOM and CRLF preserved byte for byte",
+      "status": "PASS"
+    },
+    {
+      "name": "B10 UTF-16LE and UTF-16BE BOM roundtrip",
+      "status": "PASS"
+    },
+    {
+      "name": "B10 mixed line endings require explicit confirmation",
+      "status": "PASS"
+    },
+    {
+      "name": "B11 dotfile, unknown extension and extensionless name preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "B11 renamed file uses Save As instead of original handle",
+      "status": "PASS"
+    },
+    {
+      "name": "B11 draft metadata survives recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "B12 replace all ignores temporary find selection",
+      "status": "PASS"
+    },
+    {
+      "name": "B12 explicit scope replaces only requested range",
+      "status": "PASS"
+    },
+    {
+      "name": "B13 clearing query invalidates in-flight result",
+      "status": "PASS"
+    },
+    {
+      "name": "B13 closing panel invalidates result generation",
+      "status": "PASS"
+    },
+    {
+      "name": "B14 regex disabled when Worker unavailable",
+      "status": "PASS"
+    },
+    {
+      "name": "B14 literal fallback treats regex punctuation literally",
+      "status": "PASS"
+    },
+    {
+      "name": "B14 actual worker isolates and terminates expensive regex",
+      "status": "PASS"
+    },
+    {
+      "name": "B15 selection ending at next line start excludes that line",
+      "status": "PASS"
+    },
+    {
+      "name": "B15 dedent respects same boundary and undo restores it",
+      "status": "PASS"
+    },
+    {
+      "name": "B16 leading newline at position zero reports line one",
+      "status": "PASS"
+    },
+    {
+      "name": "B17 selection offset correct; pixel geometry is NOT browser-tested",
+      "status": "PASS"
+    },
+    {
+      "name": "B18 default Tab preserves native focus navigation",
+      "status": "PASS"
+    },
+    {
+      "name": "B18 indent mode has Escape exit to toolbar",
+      "status": "PASS"
+    },
+    {
+      "name": "B19 hidden toast removes actionable control",
+      "status": "PASS"
+    },
+    {
+      "name": "B20 exact cap is not falsely marked truncated",
+      "status": "PASS"
+    },
+    {
+      "name": "B20 truncation indicator survives navigation",
+      "status": "PASS"
+    },
+    {
+      "name": "B25 new shortcut opens blank but preserves old draft",
+      "status": "PASS"
+    },
+    {
+      "name": "History undo and redo preserve programmatic edits",
+      "status": "PASS"
+    },
+    {
+      "name": "Worker replacement matches native JS substitution semantics",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual Worker successfully returns regex captures",
+      "status": "PASS"
+    },
+    {
+      "name": "Output and replacement-count limits are enforced",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrap changes never schedule a content write",
+      "status": "PASS"
+    },
+    {
+      "name": "Line gutter renders only viewport subset",
+      "status": "PASS"
+    },
+    {
+      "name": "New page draft branches never reuse restored identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Failed file write preserves dirty status and aborts stream",
+      "status": "PASS"
+    },
+    {
+      "name": "Fallback download stays dirty until explicit confirmation",
+      "status": "PASS"
+    },
+    {
+      "name": "Editing invalidates a previously captured scope",
+      "status": "PASS"
+    },
+    {
+      "name": "Oversized files rejected without state changes",
+      "status": "PASS"
+    },
+    {
+      "name": "Opening another file while save is active is blocked",
+      "status": "PASS"
+    },
+    {
+      "name": "Newer emergency journal survives completion of an older IDB write",
+      "status": "PASS"
+    },
+    {
+      "name": "Emergency journal immediately records current recovery identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Successful draft save does not clear an independent settings failure",
+      "status": "PASS"
+    },
+    {
+      "name": "Cancelled Worker cannot delete or resolve a newer job",
+      "status": "PASS"
+    },
+    {
+      "name": "Changing replacement while a search is pending schedules fresh results",
+      "status": "PASS"
+    },
+    {
+      "name": "R27 older failed IDB write cannot overwrite newer emergency journal",
+      "status": "PASS"
+    },
+    {
+      "name": "R28 failed activation message revokes reload permission",
+      "status": "PASS"
+    },
+    {
+      "name": "R29 update invalidates already-resolving literal replacement",
+      "status": "PASS"
+    },
+    {
+      "name": "R29 update terminates outstanding Worker replacement",
+      "status": "PASS"
+    },
+    {
+      "name": "B26 file type definitions match manifest exactly",
+      "status": "PASS"
+    },
+    {
+      "name": "Syntax and inline CSP hashes valid",
+      "status": "PASS"
+    }
+  ]
+}

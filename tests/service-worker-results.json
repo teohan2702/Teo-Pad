@@ -1,0 +1,90 @@
+{
+  "runtime": "v24.19.0",
+  "scope": "VM event and Cache mocks with real Web Response API",
+  "cases": [
+    {
+      "name": "B21 refreshed manifest replaces the same cache entry",
+      "status": "PASS"
+    },
+    {
+      "name": "B22 cache miss and offline returns valid 503 response",
+      "status": "PASS"
+    },
+    {
+      "name": "B23 lifetime promise covers manifest refresh and cache write",
+      "status": "PASS"
+    },
+    {
+      "name": "B23 cache write failure does not lose successful network response",
+      "status": "PASS"
+    },
+    {
+      "name": "B23 cache read failure still permits online response",
+      "status": "PASS"
+    },
+    {
+      "name": "B24 unrelated navigation bypasses this service worker",
+      "status": "PASS"
+    },
+    {
+      "name": "B24 API, foreign origin and non-GET requests bypass cache",
+      "status": "PASS"
+    },
+    {
+      "name": "B24 HTML shell is not replaced by non-HTML response",
+      "status": "PASS"
+    },
+    {
+      "name": "Server error falls back to cached shell",
+      "status": "PASS"
+    },
+    {
+      "name": "Network timeout aborts and falls back to shell",
+      "status": "PASS"
+    },
+    {
+      "name": "Manifest HTML response cannot corrupt cached JSON",
+      "status": "PASS"
+    },
+    {
+      "name": "Installation caches shell, manifest and all nine required icon files",
+      "status": "PASS"
+    },
+    {
+      "name": "Failed required asset prevents installation",
+      "status": "PASS"
+    },
+    {
+      "name": "Activation cleans own releases but preserves another app cache",
+      "status": "PASS"
+    },
+    {
+      "name": "skipWaiting only follows explicit message",
+      "status": "PASS"
+    },
+    {
+      "name": "Installed icons remain available offline with query strings",
+      "status": "PASS"
+    },
+    {
+      "name": "Icon cache miss and offline returns valid 503",
+      "status": "PASS"
+    },
+    {
+      "name": "Icon cache miss preserves online PNG bytes",
+      "status": "PASS"
+    },
+    {
+      "name": "Icon network timeout aborts and resolves to 503",
+      "status": "PASS"
+    },
+    {
+      "name": "Undeclared and out-of-scope icons bypass service worker",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing required PNG prevents worker installation",
+      "status": "PASS"
+    }
+  ]
+}

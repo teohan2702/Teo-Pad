@@ -1,0 +1,146 @@
+{
+  "id": "./",
+  "name": "TeoPad — Hafif Kod Editörü",
+  "short_name": "TeoPad",
+  "description": "Mobil uyumlu, hafif kod ve metin editörü. Dosya aç, düzenle, kaydet. Çevrimdışı çalışır.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#1f4b7a",
+  "theme_color": "#f8f9fa",
+  "orientation": "any",
+  "categories": [
+    "productivity",
+    "developer",
+    "utilities"
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Yeni boş dosya",
+      "short_name": "Yeni",
+      "description": "Boş bir düzenleyici ile başla",
+      "url": "./?new=1",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "text/plain": [
+          ".txt",
+          ".log",
+          ".env",
+          ".ini",
+          ".cfg",
+          ".properties",
+          ".toml",
+          ".csv",
+          ".php",
+          ".rb",
+          ".go",
+          ".rs",
+          ".ts",
+          ".tsx",
+          ".vue",
+          ".bat"
+        ],
+        "text/html": [
+          ".html"
+        ],
+        "text/css": [
+          ".css"
+        ],
+        "text/javascript": [
+          ".js",
+          ".jsx",
+          ".mjs"
+        ],
+        "text/markdown": [
+          ".md"
+        ],
+        "text/xml": [
+          ".xml"
+        ],
+        "text/x-python": [
+          ".py"
+        ],
+        "text/x-java-source": [
+          ".java"
+        ],
+        "text/x-c": [
+          ".c",
+          ".cpp",
+          ".h"
+        ],
+        "text/x-sh": [
+          ".sh"
+        ],
+        "application/json": [
+          ".json"
+        ],
+        "application/x-yaml": [
+          ".yml",
+          ".yaml"
+        ],
+        "application/sql": [
+          ".sql"
+        ],
+        "image/svg+xml": [
+          ".svg"
+        ]
+      },
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ],
+      "launch_type": "single-client"
+    }
+  ]
+}

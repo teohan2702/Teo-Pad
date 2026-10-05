@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="TeoPad — mobil uyumlu, hafif kod ve metin editörü. Dosya aç, düzenle, kaydet. Çevrimdışı çalışır.">
+<title>TeoPad — Hafif Kod Editörü</title>
+
+
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self' 'sha256-GclKzOTcYhNEVVMOC+QiTBCrABF7uX6keTzc/EnyTeg=' 'sha256-tip0Ixiz6M6Jd4MUSFnWHafsZyk7WMFxaOx5EywX4vs=';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  connect-src 'self';
+  worker-src 'self' blob:;
+  manifest-src 'self';
+  base-uri 'none';
+  form-action 'none'">
+
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="./icons/favicon.ico" sizes="16x16 32x32 48x48" type="image/x-icon">
+<link rel="icon" href="./icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="./icons/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" sizes="180x180">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TeoPad">
+
+
+
+
+
+<meta name="theme-color" id="themeColor" content="#f8f9fa">
+
+<script>
+
+(function () {
+  try {
+    var s = localStorage.getItem('teopad:theme') || localStorage.getItem('theme');
+    var dark = s ? s === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var m = document.getElementById('themeColor');
+    if (m) m.setAttribute('content', dark ? '#252526' : '#f8f9fa');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+
+<style>
+    :root {
+        --bg: #ffffff;
+        --text: #2c3e50;
+        --bar-bg: #f8f9fa;
+        --border: #e9ecef;
+        --accent: #007bff;          
+        --accent-hover: #0056b3;    
+        --num-bg: #f8f9fa;
+        --muted: #697077;           
+        --selection: #cce5ff;
+        --icon-color: #495057;
+        --toast-bg: #333333;
+        --toast-text: #ffffff;
+        --hover-bg: rgba(0,0,0,.05);      
+        --active-bg: rgba(0,0,0,.10);
+        --scroll-thumb: #c4c8cc;
+        --scroll-thumb-hover: #a9aeb3;
+        --danger: #b3261e;
+        --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-code: ui-monospace, "SF Mono", "Menlo", "Consolas", "Roboto Mono", "Ubuntu Mono", "Noto Mono", monospace;
+        --fs-ui: 16px;              
+    }
+
+    [data-theme="dark"] {
+        --bg: #1e1e1e;
+        --text: #d4d4d4;
+        --bar-bg: #252526;
+        --border: #333333;
+        --accent: #3794ff;          
+        --accent-hover: #79c0ff;    
+        --num-bg: #1e1e1e;
+        --muted: #8b949e;           
+        --selection: #264f78;
+        --icon-color: #cccccc;
+        --toast-bg: #e6e6e6;
+        --toast-text: #111111;
+        --hover-bg: rgba(255,255,255,.10);
+        --active-bg: rgba(255,255,255,.15);
+        --scroll-thumb: #4a4a4a;
+        --scroll-thumb-hover: #5c5c5c;
+        --danger: #f28b82;
+    }
+
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    @supports not selector(:focus-visible) {
+        :focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    }
+
+    [hidden] { display: none !important; }
+
+    html, body { height: 100%; }
+
+    body {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-ui);
+        font-size: var(--fs-ui);
+        overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    
+    .toolbar {
+        flex: 0 0 auto;                 
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 6px 10px;
+        gap: 8px;
+        min-height: 50px;
+        background: var(--bar-bg);
+        border-bottom: 1px solid var(--border);
+        transition: background .3s;
+    }
+
+    .group { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .grow  { flex: 1 1 240px; }
+
+    button {
+        background: transparent;
+        border: none;
+        color: var(--icon-color);
+        min-width: 40px;                
+        height: 40px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font: inherit;
+        font-size: 14px;
+        flex: 0 0 auto;
+        transition: background .2s ease, color .2s ease, transform .1s ease;
+    }
+    button:hover  { background: var(--hover-bg); color: var(--accent-hover); }
+    button:active { transform: scale(.95); }
+
+    button[aria-pressed="true"] { background: var(--active-bg); color: var(--accent); }
+    button svg { width: 20px; height: 20px; fill: currentColor; flex: 0 0 auto; }
+    button.accent { color: var(--accent); }
+
+    input[type="text"] {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px;
+        font-size: var(--fs-ui);        
+        font-family: var(--font-ui);
+        transition: border-color .2s;
+        min-width: 0;
+        flex: 1 1 auto;
+        height: 40px;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--muted); opacity: 1; }
+
+    select {
+        background: var(--bar-bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px;
+        font-size: var(--fs-ui);        
+        font-family: var(--font-ui);
+        cursor: pointer;
+        height: 40px;
+        flex: 0 0 auto;
+        transition: border-color .2s;
+    }
+    select:hover { border-color: var(--accent); }
+
+    
+    #searchPanel {
+        flex: 0 0 auto;
+        background: var(--bar-bg);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 10px;
+        display: flex;
+        flex-wrap: wrap;                
+        gap: 8px;
+        align-items: center;
+        animation: slideDown .2s ease-out;
+    }
+    @keyframes slideDown { from { transform: translateY(-8px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+    .find-row, .rep-row { display: flex; align-items: center; gap: 6px; flex: 1 1 320px; min-width: 0; }
+
+    #findCount {
+        font-size: 13px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        flex: 0 0 auto;
+        min-width: 44px;
+        text-align: center;
+    }
+
+    .checkbox-label {
+        font-size: 13px; font-weight: 600; color: var(--icon-color);
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; user-select: none;
+        min-width: 40px; height: 40px; padding: 0 10px;
+        border-radius: 4px; border: 1px solid var(--border);
+        flex: 0 0 auto;
+        transition: background .2s, color .2s, border-color .2s;
+    }
+    .checkbox-label:hover { border-color: var(--accent); }
+    .checkbox-label:has(input:checked) { background: var(--active-bg); color: var(--accent); border-color: var(--accent); }
+    
+    .checkbox-label input[type="checkbox"] {
+        position: absolute; width: 1px; height: 1px;
+        opacity: 0; margin: 0; pointer-events: none;
+    }
+    .checkbox-label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    
+    .editor-wrapper { flex: 1 1 auto; display: flex; position: relative; overflow: hidden; }
+
+    .line-numbers {
+        width: 48px;
+        flex: 0 0 auto;
+        background: var(--num-bg);
+        color: var(--muted);
+        text-align: right;
+        padding: 12px 8px 12px 6px;
+        font-family: var(--font-code);
+        font-size: var(--fs-ui);
+        line-height: 1.6;
+        border-right: 1px solid var(--border);
+        user-select: none;
+        white-space: pre;
+        overflow: hidden;
+        font-variant-numeric: tabular-nums;
+    }
+    
+    body.wrap .line-numbers { display: none; }
+
+    textarea {
+        flex: 1 1 auto;
+        border: none;
+        padding: 12px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-code);
+        font-size: var(--fs-ui);        
+        line-height: 1.6;
+        resize: none;
+        white-space: pre;
+        overflow: auto;
+        tab-size: 2;
+    }
+    textarea:focus-visible { outline: none; }   
+    textarea.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+    ::selection { background: var(--selection); }
+
+    
+    .statusbar {
+        flex: 0 0 auto;
+        display: flex; align-items: center; gap: 10px;
+        padding: 4px 10px;
+        min-height: 28px;
+        background: var(--bar-bg);
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .statusbar::-webkit-scrollbar { display: none; }
+    .statusbar .sep { opacity: .45; }
+    #dirtyDot { color: var(--danger); font-weight: 700; }
+    #storageWarn { color: var(--danger); font-weight: 600; }
+
+    
+    #toast {
+        position: fixed;
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%) translateY(120px);
+        display: flex; align-items: center; gap: 12px;
+        max-width: min(92vw, 460px);
+        background: var(--toast-bg);
+        color: var(--toast-text);
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.25);
+        opacity: 0;
+        transition: transform .3s ease, opacity .3s ease;
+        z-index: 9999;
+        pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%); opacity: 1; }
+    #toast.interactive { pointer-events: auto; }
+    #toastAction {
+        background: transparent; border: 1px solid currentColor; color: inherit;
+        border-radius: 6px; padding: 4px 10px; height: auto; min-width: 0;
+        font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    #toastAction:hover { background: rgba(127,127,127,.25); color: inherit; }
+
+    
+    body.dragging .editor-wrapper::after {
+        content: "Bırakın — dosya açılacak";
+        position: absolute; inset: 8px;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px dashed var(--accent);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--bg) 85%, var(--accent));
+        color: var(--accent);
+        font-weight: 600;
+        pointer-events: none;
+    }
+
+    
+    * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+
+    
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: .01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+
+    
+    @media (max-width: 620px) {
+        .grow { flex: 1 1 100%; order: -1; }
+        .find-row, .rep-row { flex: 1 1 100%; }
+        #searchPanel input[type="text"] { flex: 1 1 100%; }
+    }
+    @media (max-width: 380px) {
+        .statusbar .opt { display: none; }
+    }
+
+    
+    @media (forced-colors: active) {
+        button[aria-expanded="true"], button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+    }
+
+    .editor-wrapper { min-height: 0; }
+    textarea { min-width: 0; }
+    textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    button { padding-inline: 8px; }
+    .tools { flex-wrap: wrap; }
+    .find-row, .rep-row { flex-wrap: wrap; }
+    #searchPanel input[type="text"] { flex: 1 1 160px; }
+    #searchPanel { max-height: 45dvh; overflow-y: auto; }
+    .line-numbers { position: relative; padding: 0; }
+    #gutterLines { position: absolute; top: 12px; right: 8px; left: 0; }
+    .caret-mirror { position: fixed; top: 0; left: -20000px; visibility: hidden; pointer-events: none; border: 0; box-sizing: border-box; }
+    button[aria-expanded="true"] { background: var(--active-bg); color: var(--accent); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    dialog { margin: auto; padding: 20px; width: min(640px,94vw); max-height: 85dvh; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; }
+    dialog::backdrop { background: rgb(0 0 0 / .5); }
+    dialog p { margin-block: 12px; }
+    .draft-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-block: 8px; border-bottom: 1px solid var(--border); }
+    .draft-row span { flex: 1 1 250px; overflow-wrap: anywhere; }
+    @media (max-height: 460px) { .toolbar { max-height: 35dvh; overflow-y: auto; } }
+
+</style>
+</head>
+<body>
+
+
+<div class="toolbar" role="group" aria-label="Araç çubuğu">
+    <div class="group grow">
+        <button type="button" id="openButton" data-action="open" title="Dosya Aç (Ctrl+O)" aria-label="Dosya Aç">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+        </button>
+        <input type="text" id="fName" value="index.html" placeholder="Tam dosya adı" aria-label="Uzantısıyla birlikte dosya adı" autocomplete="off" spellcheck="false">
+        
+        <select id="extSelect" title="Dosya uzantısı" aria-label="Dosya uzantısı"></select>
+        <button type="button" data-action="save" class="accent" title="Kaydet (Ctrl+S) — Farklı Kaydet için Ctrl+Shift+S" aria-label="Kaydet">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+        </button>
+    </div>
+    <div class="group tools">
+        <button type="button" data-action="new" title="Yeni belge">Yeni</button>
+        <button type="button" data-action="save-as" title="Farklı kaydet (Ctrl+Shift+S)">Farklı kaydet</button>
+        <button type="button" data-action="undo" aria-label="Geri al" title="Geri al (Ctrl+Z)">↶</button>
+        <button type="button" data-action="redo" aria-label="Yinele" title="Yinele (Ctrl+Shift+Z)">↷</button>
+        <button type="button" data-action="drafts">Taslaklar</button>
+        <button type="button" id="btnTab" data-action="tab" aria-pressed="false" title="Tab ile girintilemeyi aç/kapat; Esc ile araç çubuğuna çık">Tab girinti</button>
+        <button type="button" id="btnPairs" data-action="pairs" aria-pressed="true" title="Otomatik parantez ve girinti">Oto. parantez</button>
+        <button type="button" id="updateButton" data-action="update" hidden>Güncelle</button>
+        <button type="button" id="btnWrap" data-action="wrap" title="Satır Kaydır" aria-label="Satır Kaydır" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v2H4zm0 6h16v2H4zm0 6h10v2H4z"/></svg>
+        </button>
+        <button type="button" id="btnSearch" data-action="search" title="Ara ve Değiştir (Ctrl+F)" aria-label="Ara ve Değiştir" aria-expanded="false" aria-controls="searchPanel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+        <button type="button" id="btnTheme" data-action="theme" title="Tema Değiştir" aria-label="Tema Değiştir">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+    </div>
+</div>
+
+<div id="searchPanel" role="search" aria-label="Ara ve değiştir" hidden>
+    <div class="find-row">
+        <input type="text" id="sTxt" placeholder="Aranacak kelime" aria-label="Aranacak metin" autocomplete="off" spellcheck="false">
+        <span id="findCount" role="status" aria-live="polite" aria-label="Eşleşme sayısı">0/0</span>
+        <button type="button" data-action="find-prev" title="Önceki (Shift+Enter)" aria-label="Önceki eşleşme">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+        </button>
+        <button type="button" data-action="find-next" title="Sonraki (Enter)" aria-label="Sonraki eşleşme">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
+    </div>
+    <div class="rep-row">
+        <input type="text" id="rTxt" placeholder="Yeni değer" aria-label="Yeni değer" autocomplete="off" spellcheck="false">
+        <label class="checkbox-label" title="Büyük/küçük harf duyarlı">
+            <input type="checkbox" id="cCase" aria-label="Büyük küçük harf duyarlı">Aa
+        </label>
+        <label class="checkbox-label" title="Regex modu ($1, $&amp; destekli)">
+            <input type="checkbox" id="cReg" aria-label="Regex modu">.*
+        </label>
+        <label class="checkbox-label" title="Editördeki seçimi sabit arama kapsamı yap"><input type="checkbox" id="cScope">Seçimde</label>
+        <button type="button" data-action="replace" title="Tümünü Değiştir" aria-label="Tümünü değiştir" style="padding:0 12px">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>
+        </button>
+        <button type="button" data-action="close-search" title="Kapat (Esc)" aria-label="Aramayı kapat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+    </div>
+</div>
+
+<div class="editor-wrapper">
+    <div class="line-numbers" id="nums" aria-hidden="true"><div id="gutterLines">1</div></div>
+    <textarea id="ed" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+              aria-label="Metin düzenleyici" aria-describedby="editorHelp" readonly wrap="off"></textarea>
+</div>
+
+<p id="editorHelp" class="sr-only">Tab tuşu varsayılan olarak odağı taşır. Tab girinti açıksa Esc ile araç çubuğuna çıkın. Geri al: Ctrl veya Command Z.</p>
+<div class="statusbar" id="statusbar">
+    <span id="dirtyDot" hidden title="Diske kaydedilmemiş değişiklikler var">●</span>
+    <span id="posInfo">Sat 1, Süt 1</span>
+    <span class="sep opt">·</span>
+    <span id="docInfo" class="opt">1 satır</span>
+    <span class="sep opt">·</span>
+    <span id="encInfo" class="opt">UTF-8</span>
+    <span id="draftStatus" role="status">Yükleniyor…</span>
+    <span id="storageWarn" role="status" hidden></span>
+</div>
+
+<div id="toast" role="status" aria-live="polite">
+    <span id="toastMsg"></span>
+    <button type="button" id="toastAction" hidden></button>
+</div>
+
+<input type="file" id="fileIn" hidden aria-hidden="true" tabindex="-1">
+
+<dialog id="draftDialog" aria-labelledby="draftTitle">
+  <h2 id="draftTitle">Korunan taslaklar</h2>
+  <p>Kurtarma yeni bir kopya açar. Eski taslaklar siz silene kadar korunur.</p>
+  <div id="draftList"></div>
+  <button type="button" data-action="close-drafts">Kapat</button>
+</dialog>
+<script>
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const ui = Object.fromEntries(['ed','nums','gutterLines','fName','extSelect','fileIn','searchPanel',
+    'sTxt','rTxt','cCase','cReg','cScope','findCount','posInfo','docInfo','dirtyDot','encInfo',
+    'storageWarn','draftStatus','toast','toastMsg','toastAction','btnWrap','btnSearch','btnTab',
+    'btnPairs','updateButton','draftDialog','draftList'].map(id => [id, $(id)]));
+  const TYPES = {"text/plain": [".txt", ".log", ".env", ".ini", ".cfg", ".properties", ".toml", ".csv", ".php", ".rb", ".go", ".rs", ".ts", ".tsx", ".vue", ".bat"], "text/html": [".html"], "text/css": [".css"], "text/javascript": [".js", ".jsx", ".mjs"], "text/markdown": [".md"], "text/xml": [".xml"], "text/x-python": [".py"], "text/x-java-source": [".java"], "text/x-c": [".c", ".cpp", ".h"], "text/x-sh": [".sh"], "application/json": [".json"], "application/x-yaml": [".yml", ".yaml"], "application/sql": [".sql"], "image/svg+xml": [".svg"]};
+  const EXTENSIONS = Object.values(TYPES).flat().map(extension => extension.slice(1));
+  const LIMIT = 10 * 1024 * 1024;
+  const INDENT = '  ';
+  const NS = 'teopad:';
+  const id = () => crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const lineStart = (text, position) => position === 0 ? 0 : text.lastIndexOf('\n', position - 1) + 1;
+  const normalize = text => text.replace(/\r\n?/g, '\n');
+  const setting = key => { try { return localStorage.getItem(NS + key); } catch { return null; } };
+  const settingsErrors = new Set();
+  function setSetting(key, value) {
+    try { localStorage.setItem(NS + key, String(value)); settingsErrors.delete(key); }
+    catch { settingsErrors.add(key); }
+    renderStorage();
+  }
+
+  let toastTimer;
+  function hideToast() {
+    clearTimeout(toastTimer);
+    ui.toast.classList.remove('show', 'interactive');
+    ui.toastAction.hidden = true;
+    ui.toastAction.onclick = null;
+  }
+  function toast(message, action, duration = 4500) {
+    hideToast();
+    ui.toastMsg.textContent = message;
+    ui.toast.classList.add('show');
+    if (action) {
+      ui.toastAction.textContent = action.label;
+      ui.toastAction.hidden = false;
+      ui.toastAction.onclick = () => { hideToast(); Promise.resolve().then(action.run).catch(reportError); };
+      ui.toast.classList.add('interactive');
+    }
+    if (duration) toastTimer = setTimeout(hideToast, duration);
+  }
+  function reportError(error) { toast(error.message || 'İşlem tamamlanamadı.'); }
+
+  // Each page owns a distinct draft branch. Recovery copies a branch instead of overwriting it.
+  const Store = (() => {
+    let opening = null;
+    function open() {
+      if (opening) return opening;
+      opening = new Promise((resolve, reject) => {
+        let request, ended = false;
+        const fail = error => { if (!ended) { ended = true; clearTimeout(timer); reject(error); } };
+        const timer = setTimeout(() => fail(new Error('Taslak deposuna erişim zaman aşımına uğradı.')), 4000);
+        try { request = indexedDB.open('teopad', 1); } catch (error) { fail(error); return; }
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains('kv')) request.result.createObjectStore('kv');
+        };
+        request.onerror = () => fail(request.error);
+        request.onblocked = () => fail(new Error('Taslak deposu başka bir pencere tarafından engelleniyor.'));
+        request.onsuccess = () => {
+          if (ended) { request.result.close(); return; }
+          ended = true; clearTimeout(timer);
+          const database = request.result;
+          database.onversionchange = () => { database.close(); opening = null; };
+          resolve(database);
+        };
+      }).catch(error => { opening = null; throw error; });
+      return opening;
+    }
+    async function transaction(mode, action) {
+      const database = await open();
+      return new Promise((resolve, reject) => {
+        let tx;
+        try {
+          tx = database.transaction('kv', mode);
+          const request = action(tx.objectStore('kv'));
+          tx.oncomplete = () => resolve(request?.result);
+          tx.onerror = tx.onabort = () => reject(tx.error || new Error('Taslak işlemi tamamlanamadı.'));
+        } catch (error) { opening = null; reject(error); }
+      });
+    }
+    const key = draftId => NS + 'draft:' + draftId;
+    const valid = record => record && record.schema === 3 && typeof record.id === 'string' &&
+      typeof record.name === 'string' && typeof record.text === 'string' && record.text.length <= LIMIT &&
+      Number.isSafeInteger(record.revision) && record.revision >= 0 && Number.isFinite(record.savedAt) &&
+      ['utf-8','utf-16le','utf-16be'].includes(record.encoding) && ['\n','\r\n','\r'].includes(record.eol);
+    function localPut(record) {
+      let previous;
+      try { previous = JSON.parse(localStorage.getItem(key(record.id)) || 'null'); }
+      catch { /* A malformed journal can be replaced by a valid record. */ }
+      if (valid(previous) && (previous.revision > record.revision ||
+          (previous.revision === record.revision && previous.savedAt > record.savedAt))) return;
+      localStorage.setItem(key(record.id), JSON.stringify(record));
+    }
+    async function put(record) {
+      try {
+        await transaction('readwrite', store => store.put(record, 'draft:' + record.id));
+        try {
+          const journal = JSON.parse(localStorage.getItem(key(record.id)) || 'null');
+          if (!journal || journal.revision <= record.revision) localStorage.removeItem(key(record.id));
+        } catch { /* Keep an unreadable or newer journal for recovery. */ }
+        return 'indexedDB';
+      } catch {
+        localPut(record); // Failure must propagate to callers, especially the update flow.
+        return 'localStorage';
+      }
+    }
+    async function list() {
+      const merged = new Map();
+      const accept = record => {
+        if (!valid(record)) return;
+        const previous = merged.get(record.id);
+        if (!previous || record.revision > previous.revision ||
+            (record.revision === previous.revision && record.savedAt > previous.savedAt)) merged.set(record.id, record);
+      };
+      let accessible = false;
+      try {
+        const records = await transaction('readonly', store => store.getAll());
+        accessible = true; records.forEach(accept);
+      } catch { /* The journal may still be available. */ }
+      try {
+        for (let n = 0; n < localStorage.length; n++) {
+          const k = localStorage.key(n);
+          if (!k.startsWith(NS + 'draft:')) continue;
+          try { accept(JSON.parse(localStorage.getItem(k))); } catch { /* Ignore malformed records. */ }
+        }
+        accessible = true;
+      } catch { /* Report only if neither backend is readable. */ }
+      if (!accessible) throw new Error('Taslak deposu okunamıyor. Dosyaya kaydetmeyi kullanın.');
+      return [...merged.values()].sort((a,b) => b.savedAt - a.savedAt);
+    }
+    async function remove(draftId) {
+      // Both copies must be removed; otherwise an older copy could reappear.
+      await transaction('readwrite', store => store.delete('draft:' + draftId));
+      localStorage.removeItem(key(draftId));
+    }
+    async function migrate() {
+      for (const name of ['theme','wrap','ext']) {
+        try {
+          if (localStorage.getItem(NS + name) === null && localStorage.getItem(name) !== null)
+            localStorage.setItem(NS + name, localStorage.getItem(name));
+        } catch { /* Settings migration never deletes the original. */ }
+      }
+      if (setting('migration-v3') === 'done') return;
+      let oldIDB, readOK = false;
+      try { oldIDB = await transaction('readonly', store => store.get('content')); readOK = true; } catch { /* Retry next launch. */ }
+      const candidates = [];
+      if (typeof oldIDB === 'string') candidates.push(['legacy-idb', oldIDB]);
+      try {
+        for (const k of [NS + 'content','txt']) {
+          const text = localStorage.getItem(k);
+          if (text !== null && !candidates.some(([, other]) => other === text)) candidates.push([k === 'txt' ? 'legacy-txt' : 'legacy-local',text]);
+        }
+      } catch { readOK = false; }
+      // Ambiguous old backends are retained as separate recoverable drafts.
+      for (const [draftId, text] of candidates) {
+        if (text.length > LIMIT) throw new Error('Eski taslak 10 MiB sınırını aşıyor; eski kayıt silinmedi.');
+        const existing = (await list()).some(record => record.id === draftId);
+        if (!existing) await put({schema:3,id:draftId,revision:0,savedAt:Date.now(),
+          text:normalize(text),name:'kurtarilan-' + draftId + '.txt',encoding:'utf-8',bom:false,eol:'\n'});
+      }
+      if (readOK) {
+        // Retain old keys as a rollback copy; the marker prevents repeated import.
+        try { localStorage.setItem(NS + 'migration-v3','done'); } catch { /* Idempotent import can repeat. */ }
+      }
+    }
+    return {put,list,remove,migrate,journal:localPut};
+  })();
+
+  function newState(values = {}) {
+    return {id:id(), revision:0, text:'', name:'index.html', encoding:'utf-8', bom:false,
+      eol:'\n', handle:null, snapshot:{text:'',name:'index.html'}, ...values};
+  }
+  let doc = newState();
+  let ready = false, busyOpen = false, busySave = false, busySwitch = false, updating = false;
+  let draftError = false, saveTimer, saveQueue = Promise.resolve(), persistedRevision = -1;
+  let pendingReload = false, waitingWorker = null;
+  let lineOffsets = [0], renderPending = false;
+  let tabIndent = setting('tabIndent') === 'true';
+  let pairsEnabled = setting('pairs') !== 'false';
+  const history = {undo:[],redo:[],bytes:0};
+
+  function dirty() { return !doc.snapshot || doc.text !== doc.snapshot.text || doc.name !== doc.snapshot.name; }
+  function recordOf(documentState = doc) {
+    return {schema:3,id:documentState.id,revision:documentState.revision,savedAt:Date.now(),
+      name:documentState.name,text:documentState.text,encoding:documentState.encoding,
+      bom:documentState.bom,eol:documentState.eol};
+  }
+  function renderStorage() {
+    ui.storageWarn.hidden = !draftError && settingsErrors.size === 0;
+    ui.storageWarn.textContent = draftError ? '⚠ Taslak kaydedilemedi' : '⚠ Bazı ayarlar kaydedilemedi';
+  }
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    ui.draftStatus.textContent = 'Taslak bekliyor';
+    saveTimer = setTimeout(() => { saveTimer = null; persist().catch(() => {}); }, 400);
+  }
+  function persist() {
+    clearTimeout(saveTimer); saveTimer = null;
+    const record = recordOf();
+    if (record.revision === persistedRevision) return saveQueue;
+    const operation = saveQueue.catch(() => {}).then(() => Store.put(record));
+    saveQueue = operation;
+    operation.then(() => {
+      if (doc.id !== record.id) return;
+      persistedRevision = record.revision;
+      draftError = false; renderStorage();
+      ui.draftStatus.textContent = doc.revision === record.revision ? 'Taslak korundu' : 'Taslak bekliyor';
+      try { sessionStorage.setItem(NS + 'last-draft',record.id); } catch { /* Recovery list remains available. */ }
+    }, () => {
+      if (doc.id !== record.id) return;
+      draftError = true; renderStorage(); ui.draftStatus.textContent = 'Taslak kaydedilemedi';
+      toast('Taslak kaydedilemedi. Çalışmanızı dosyaya kaydedin.', null, 7000);
+    });
+    return operation;
+  }
+  function emergencyJournal() {
+    if (!ready || doc.revision === persistedRevision) return;
+    try {
+      Store.journal(recordOf());
+      try { sessionStorage.setItem(NS + 'last-draft',doc.id); } catch { /* Recovery list still includes the journal. */ }
+    } catch { draftError = true; renderStorage(); }
+    persist().catch(() => {});
+  }
+
+  function indexLines() {
+    lineOffsets = [0];
+    for (let offset = doc.text.indexOf('\n'); offset !== -1; offset = doc.text.indexOf('\n', offset + 1)) lineOffsets.push(offset + 1);
+  }
+  function lineAt(offset) {
+    let lo = 0, hi = lineOffsets.length;
+    while (lo + 1 < hi) { const mid = (lo + hi) >>> 1; if (lineOffsets[mid] <= offset) lo = mid; else hi = mid; }
+    return lo;
+  }
+  function renderGutter() {
+    if (ui.ed.classList.contains('wrap')) return;
+    const height = parseFloat(getComputedStyle(ui.ed).lineHeight);
+    const first = Math.max(0, Math.floor((ui.ed.scrollTop - 12) / height));
+    const end = Math.min(lineOffsets.length, first + Math.ceil(ui.ed.clientHeight / height) + 3);
+    const labels = [];
+    for (let n = first; n < end; n++) labels.push(n + 1);
+    ui.gutterLines.textContent = labels.join('\n');
+    ui.gutterLines.style.transform = `translateY(${first * height - ui.ed.scrollTop}px)`;
+    ui.nums.style.width = `calc(${String(lineOffsets.length).length}ch + 20px)`;
+  }
+  function renderStatus() {
+    const position = ui.ed.selectionStart, line = lineAt(position);
+    ui.posInfo.textContent = `Sat ${line + 1}, Süt ${position - lineOffsets[line] + 1}`;
+    const selection = ui.ed.selectionEnd - position;
+    ui.docInfo.textContent = `${lineOffsets.length.toLocaleString('tr-TR')} satır · ${doc.text.length.toLocaleString('tr-TR')} UTF-16 birimi` +
+      (selection ? ` · ${selection} seçili` : '');
+    ui.dirtyDot.hidden = !dirty();
+    ui.encInfo.textContent = doc.encoding.toUpperCase() + (doc.bom ? ' BOM' : '') + ' · ' +
+      ({'\n':'LF','\r\n':'CRLF','\r':'CR'}[doc.eol]);
+    document.title = (dirty() ? '● ' : '') + doc.name + ' — TeoPad';
+  }
+  function render() {
+    if (renderPending) return;
+    renderPending = true;
+    requestAnimationFrame(() => { renderPending = false; renderGutter(); renderStatus(); });
+  }
+  function clearHistory() { history.undo.length = 0; history.redo.length = 0; history.bytes = 0; }
+  function pushHistory(previous, next, before, after) {
+    let from = 0, a = previous.length, b = next.length;
+    while (from < a && from < b && previous[from] === next[from]) from++;
+    while (a > from && b > from && previous[a - 1] === next[b - 1]) { a--; b--; }
+    const patch = {from,removed:previous.slice(from,a),inserted:next.slice(from,b),before,after};
+    history.undo.push(patch); history.redo.length = 0;
+    history.bytes += patch.removed.length + patch.inserted.length;
+    while (history.undo.length > 100 || history.bytes > 2 * LIMIT) {
+      if (history.undo.length <= 1) break;
+      const old = history.undo.shift(); history.bytes -= old.removed.length + old.inserted.length;
+    }
+  }
+  function changed() {
+    doc.revision++;
+    clearScope(); indexLines(); invalidateSearch(); render(); scheduleSave();
+  }
+  function setText(text, selection, remember = true, before = [ui.ed.selectionStart,ui.ed.selectionEnd]) {
+    text = normalize(text);
+    if (text.length > LIMIT) { toast('Belge çok büyük; işlem uygulanmadı.'); return false; }
+    const previous = doc.text;
+    if (previous !== text && remember) pushHistory(previous,text,before,selection);
+    doc.text = text;
+    if (ui.ed.value !== text) ui.ed.value = text;
+    if (ui.ed.selectionStart !== selection[0] || ui.ed.selectionEnd !== selection[1]) ui.ed.setSelectionRange(...selection);
+    if (previous !== text) changed(); else render();
+    return true;
+  }
+  function replaceRange(text, from, to, selection) {
+    const top = ui.ed.scrollTop, left = ui.ed.scrollLeft;
+    const next = doc.text.slice(0,from) + text + doc.text.slice(to);
+    if (!setText(next,selection || [from + text.length,from + text.length])) return false;
+    ui.ed.focus({preventScroll:true}); ui.ed.scrollTop = top; ui.ed.scrollLeft = left; renderGutter();
+    return true;
+  }
+  function undo(redo = false) {
+    const source = redo ? history.redo : history.undo, target = redo ? history.undo : history.redo;
+    const patch = source.pop(); if (!patch) return;
+    const removed = redo ? patch.removed : patch.inserted, inserted = redo ? patch.inserted : patch.removed;
+    const text = doc.text.slice(0,patch.from) + inserted + doc.text.slice(patch.from + removed.length);
+    setText(text,redo ? patch.after : patch.before,false); target.push(patch);
+    if (!redo) history.bytes -= patch.removed.length + patch.inserted.length;
+    else history.bytes += patch.removed.length + patch.inserted.length;
+  }
+
+  function splitName(name) {
+    const point = name.lastIndexOf('.');
+    return point > 0 && point < name.length - 1 ? {base:name.slice(0,point),ext:name.slice(point + 1)} : {base:name,ext:''};
+  }
+  function syncName() {
+    ui.fName.value = doc.name;
+    const ext = splitName(doc.name).ext;
+    for (const option of [...ui.extSelect.options]) if (option.dataset.custom) option.remove();
+    if (ext && !EXTENSIONS.includes(ext)) {
+      const option = new Option('.' + ext,ext); option.dataset.custom = 'true'; ui.extSelect.add(option);
+    }
+    ui.extSelect.value = ext;
+  }
+  function rename(name) {
+    if (!ready || name === doc.name) return;
+    doc.name = name; doc.revision++; syncName(); render(); scheduleSave();
+  }
+  function filename() {
+    const name = doc.name.trim();
+    if (!name || /[<>:"/\\|?*\x00-\x1f]/.test(name) || /[. ]$/.test(name) ||
+        /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name))
+      throw new Error('Geçerli bir tam dosya adı girin; uzantısız ad ve .env kullanılabilir.');
+    return name;
+  }
+  function pickerTypes() { return [{description:'Metin ve kod dosyaları',accept:TYPES}]; }
+  function decodeFile(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let encoding = 'utf-8', bom = false, skip = 0;
+    if (bytes[0] === 0xff && bytes[1] === 0xfe) { encoding = 'utf-16le'; bom = true; skip = 2; }
+    else if (bytes[0] === 0xfe && bytes[1] === 0xff) { encoding = 'utf-16be'; bom = true; skip = 2; }
+    else if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) { bom = true; skip = 3; }
+    let text;
+    try { text = new TextDecoder(encoding,{fatal:true,ignoreBOM:true}).decode(bytes.subarray(skip)); }
+    catch { throw new Error('Dosya geçerli UTF-8 veya BOM işaretli UTF-16 değil. Mevcut belge korundu; dosyayı önce UTF-8 olarak dönüştürün.'); }
+    if (text.includes('\0')) throw new Error('Dosya NUL karakteri içeriyor; ikili dosya olabileceği için açılmadı.');
+    const endings = text.match(/\r\n|\r|\n/g) || [];
+    const mixed = new Set(endings).size > 1;
+    const eol = mixed ? '\n' : endings[0] || '\n';
+    return {text:normalize(text),encoding,bom,eol,mixed};
+  }
+  function encodeFile(documentState) {
+    const text = documentState.text.replace(/\n/g,documentState.eol);
+    if (documentState.encoding === 'utf-8') {
+      const data = new TextEncoder().encode(text);
+      if (!documentState.bom) return data;
+      const bytes = new Uint8Array(data.length + 3); bytes.set([0xef,0xbb,0xbf]); bytes.set(data,3); return bytes;
+    }
+    const bytes = new Uint8Array(text.length * 2 + (documentState.bom ? 2 : 0));
+    const view = new DataView(bytes.buffer), little = documentState.encoding === 'utf-16le';
+    const offset = documentState.bom ? 2 : 0;
+    if (offset) view.setUint16(0,0xfeff,little);
+    for (let i = 0; i < text.length; i++) view.setUint16(offset + 2 * i,text.charCodeAt(i),little);
+    return bytes;
+  }
+  function commitDocument(values) {
+    clearTimeout(saveTimer); saveTimer = null; cancelJobs();
+    doc = newState(values); persistedRevision = -1;
+    ui.ed.value = doc.text; ui.ed.setSelectionRange(0,0); ui.ed.scrollTop = ui.ed.scrollLeft = 0;
+    clearHistory(); indexLines(); clearScope(); syncName(); invalidateSearch(); render();
+    ui.draftStatus.textContent = 'Hazır';
+  }
+  function canSwitch() {
+    return !dirty() || confirm('Kaydedilmemiş değişiklikler var. Mevcut belgeyi taslakta koruyarak devam edilsin mi?');
+  }
+  async function preserveCurrent() { if (dirty() || doc.revision > 0) await persist(); }
+  async function openFile(file, handle = null) {
+    if (!ready || busySwitch || busySave || updating || !file) return false;
+    if (file.size > LIMIT) { toast('10 MiB üzerindeki dosyalar açılmıyor. Mevcut belge korundu.'); return false; }
+    if (!canSwitch()) return false;
+    busySwitch = true;
+    const start = {id:doc.id,revision:doc.revision};
+    try {
+      const decoded = decodeFile(await file.arrayBuffer());
+      if (doc.id !== start.id || doc.revision !== start.revision) throw new Error('Okuma sırasında belge değişti. Dosya açılmadı; yeniden deneyin.');
+      if (decoded.mixed && !confirm('Dosyada karışık satır sonları var. LF biçimine dönüştürülerek açılsın mı? Kaydedene kadar özgün dosya değişmez.')) return false;
+      await preserveCurrent();
+      if (doc.id !== start.id || doc.revision !== start.revision) throw new Error('Belge değiştiği için açma iptal edildi.');
+      commitDocument({...decoded,name:file.name,handle,snapshot:decoded.mixed ? null : {text:decoded.text,name:file.name}});
+      toast('Açıldı: ' + file.name + (decoded.mixed ? ' · Satır sonları LF oldu.' : ''));
+      return true;
+    } catch (error) { reportError(error); return false; }
+    finally { busySwitch = false; }
+  }
+  async function openDialog() {
+    if (!ready || busyOpen || busySave || busySwitch || updating) return;
+    if (!window.showOpenFilePicker) { ui.fileIn.click(); return; }
+    busyOpen = true;
+    try {
+      const [handle] = await window.showOpenFilePicker({types:pickerTypes(),multiple:false});
+      await openFile(await handle.getFile(),handle);
+    } catch (error) {
+      if (error.name !== 'AbortError') toast('Dosya seçici açılamadı. Standart seçiciyi kullanın.',{label:'Dosya seç',run:() => ui.fileIn.click()});
+    } finally { busyOpen = false; }
+  }
+  async function newDocument() {
+    if (!ready || busySwitch || busySave || updating || !canSwitch()) return false;
+    busySwitch = true; const revision = doc.revision;
+    try {
+      await preserveCurrent();
+      if (revision !== doc.revision) throw new Error('Belge değiştiği için yeni dosya açılmadı.');
+      commitDocument(); ui.ed.focus(); return true;
+    } catch (error) { reportError(error); return false; }
+    finally { busySwitch = false; }
+  }
+  async function writeHandle(handle, bytes) {
+    const stream = await handle.createWritable();
+    try { await stream.write(bytes); await stream.close(); }
+    catch (error) { try { await stream.abort(); } catch { /* Stream may already be closed. */ } throw error; }
+  }
+  function download(captured, name, bytes) {
+    const url = URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = name;
+    document.body.append(anchor); anchor.click(); anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url),60000);
+    toast('İndirme başlatıldı. Dosyanın tamamlandığını doğrulayın.',{
+      label:'İndirdim',run:() => markSaved(captured,name,null)
+    },0);
+  }
+  function markSaved(captured, name, handle) {
+    if (doc.id !== captured.id) return;
+    doc.snapshot = {text:captured.text,name};
+    if (doc.revision === captured.revision && doc.name !== name) { doc.name = name; doc.revision++; }
+    doc.handle = handle;
+    syncName(); render(); scheduleSave();
+  }
+  async function save(saveAs = false) {
+    if (!ready || busySave || busySwitch || updating) return false;
+    let name;
+    try { name = filename(); } catch (error) { reportError(error); return false; }
+    const captured = {...doc};
+    const bytes = encodeFile(captured);
+    busySave = true;
+    try {
+      if (!saveAs && captured.handle && captured.handle.name === name) {
+        await writeHandle(captured.handle,bytes);
+        markSaved(captured,name,captured.handle); toast('Kaydedildi: ' + name); return true;
+      }
+      if (!window.showSaveFilePicker) { download(captured,name,bytes); return true; }
+      const handle = await window.showSaveFilePicker({suggestedName:name,types:pickerTypes()});
+      await writeHandle(handle,bytes);
+      markSaved(captured,handle.name,handle); toast('Kaydedildi: ' + handle.name); return true;
+    } catch (error) {
+      if (error.name !== 'AbortError') toast('Dosyaya yazılamadı; belge kaydedilmiş sayılmadı.',{
+        label:'Kopyasını indir',run:() => download(captured,name,bytes)
+      },0);
+      return false;
+    } finally { busySave = false; }
+  }
+
+  // One pure engine is used by the Worker and the safe literal-only fallback.
+  function searchEngine(job) {
+    const pattern = job.regex ? job.query : job.query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const expression = new RegExp(pattern,job.caseSensitive ? 'g' : 'gi');
+    const text = job.text;
+    if (job.op === 'find') {
+      const matches = []; let match;
+      while ((match = expression.exec(text)) !== null) {
+        if (matches.length === job.cap) return {matches,truncated:true};
+        matches.push([match.index,match.index + match[0].length]);
+        if (!match[0].length) expression.lastIndex++;
+      }
+      return {matches,truncated:false};
+    }
+    let count = 0, cursor = 0, length = 0, match;
+    const parts = [];
+    function append(part) {
+      length += part.length;
+      if (length > job.limit) throw new Error('Sonuç belge boyutu sınırını aşıyor.');
+      parts.push(part);
+    }
+    function replacement(match) {
+      if (!job.regex) return job.replacement;
+      return job.replacement.replace(/\$([$&'`]|\d{1,2}|<[^>]*>)/g,(token,ref) => {
+        if (ref === '$') return '$';
+        if (ref === '&') return match[0];
+        if (ref === '`') return text.slice(0,match.index);
+        if (ref === "'") return text.slice(match.index + match[0].length);
+        if (ref[0] === '<') return match.groups ? (match.groups[ref.slice(1,-1)] ?? '') : token;
+        let n = Number(ref);
+        if (n > 0 && n < match.length) return match[n] ?? '';
+        if (ref.length === 2 && Number(ref[0]) > 0 && Number(ref[0]) < match.length)
+          return (match[Number(ref[0])] ?? '') + ref[1];
+        return token;
+      });
+    }
+    while ((match = expression.exec(text)) !== null) {
+      if (++count > job.cap) throw new Error('Tek işlemde en fazla ' + job.cap + ' değişiklik yapılabilir. Kapsamı daraltın.');
+      append(text.slice(cursor,match.index)); append(replacement(match));
+      cursor = match.index + match[0].length;
+      if (!match[0].length) expression.lastIndex++;
+    }
+    append(text.slice(cursor));
+    return {text:parts.join(''),count};
+  }
+  const jobs = new Map();
+  function cancelJob(kind) { jobs.get(kind)?.cancel(); }
+  function cancelJobs() { for (const kind of [...jobs.keys()]) cancelJob(kind); }
+  function runJob(kind, payload) {
+    cancelJob(kind);
+    return new Promise((resolve,reject) => {
+      let worker, timer, settled = false;
+      const finish = (error,result) => {
+        if (settled) return;
+        settled = true; clearTimeout(timer); worker?.terminate();
+        if (jobs.get(kind)?.cancel === cancel) jobs.delete(kind);
+        error ? reject(error) : resolve(result);
+      };
+      const cancel = () => finish(new DOMException('İşlem iptal edildi.','AbortError'));
+      try {
+        const code = `const engine = ${searchEngine.toString()};self.onmessage = event => {try {self.postMessage({value:engine(event.data)});} catch(error) {self.postMessage({error:error.message});}};`;
+        const url = URL.createObjectURL(new Blob([code],{type:'text/javascript'}));
+        try { worker = new Worker(url); } finally { URL.revokeObjectURL(url); }
+        jobs.set(kind,{cancel});
+        timer = setTimeout(() => finish(new Error('Desen zaman aşımına uğradı; işlem durduruldu.')),1500);
+        worker.onmessage = event => finish(event.data.error ? new Error(event.data.error) : null,event.data.value);
+        worker.onerror = () => finish(new Error('Güvenli arama motoru çalıştırılamadı.'));
+        worker.postMessage(payload);
+      } catch (error) {
+        worker?.terminate(); clearTimeout(timer); jobs.delete(kind);
+        if (payload.regex) { reject(new Error('Regex için Web Worker gerekli. Düz metin aramasını kullanın.')); return; }
+        try { resolve(searchEngine(payload)); } catch (failure) { reject(failure); }
+      }
+    });
+  }
+  const search = {generation:0,matches:[],index:-1,truncated:false,scope:null,timer:null,revision:-1};
+  function clearScope() { search.scope = null; ui.cScope.checked = false; }
+  function updateCount(message) {
+    ui.findCount.textContent = message || `${search.index + 1}/${search.matches.length}${search.truncated ? '+' : ''}`;
+    ui.findCount.title = search.truncated ? 'İlk 20.000 eşleşme; daha fazlası var.' : '';
+  }
+  function invalidateSearch() {
+    search.generation++; cancelJobs(); clearTimeout(search.timer);
+    search.matches = []; search.index = -1; search.truncated = false; search.revision = -1;
+    updateCount();
+    if (!updating && !ui.searchPanel.hidden && ui.sTxt.value) search.timer = setTimeout(runFind,180);
+  }
+  function searchPayload(op) {
+    const scope = search.scope || [0,doc.text.length];
+    return {op,query:ui.sTxt.value,regex:ui.cReg.checked,caseSensitive:ui.cCase.checked,
+      replacement:ui.rTxt.value,text:doc.text.slice(...scope),cap:20000,limit:LIMIT - (doc.text.length - (scope[1] - scope[0]))};
+  }
+  async function runFind() {
+    clearTimeout(search.timer);
+    if (!ready || updating || ui.searchPanel.hidden || !ui.sTxt.value) return;
+    const generation = ++search.generation, documentId = doc.id, revision = doc.revision;
+    const from = search.scope?.[0] || 0;
+    updateCount('…');
+    try {
+      const result = await runJob('find',searchPayload('find'));
+      if (generation !== search.generation || documentId !== doc.id || revision !== doc.revision) return;
+      search.matches = result.matches.map(([a,b]) => [a + from,b + from]);
+      search.index = -1; search.truncated = result.truncated; search.revision = revision; updateCount();
+    } catch (error) {
+      if (error.name !== 'AbortError' && generation === search.generation) { updateCount('⚠'); ui.findCount.title = error.message; }
+    }
+  }
+  const mirror = document.createElement('div');
+  mirror.className = 'caret-mirror'; mirror.setAttribute('aria-hidden','true'); document.body.append(mirror);
+  function revealOffset(offset) {
+    const styles = getComputedStyle(ui.ed);
+    const properties = ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','tabSize','paddingTop','paddingRight','paddingBottom','paddingLeft'];
+    for (const key of properties) mirror.style[key] = styles[key];
+    mirror.style.width = ui.ed.clientWidth + 'px';
+    const wrap = ui.ed.classList.contains('wrap');
+    mirror.style.whiteSpace = wrap ? 'pre-wrap' : 'pre';
+    mirror.style.overflowWrap = wrap ? 'anywhere' : 'normal';
+    const marker = document.createElement('span'); marker.textContent = doc.text.slice(offset) || '\u200b';
+    mirror.replaceChildren(document.createTextNode(doc.text.slice(0,offset)),marker);
+    const height = parseFloat(styles.lineHeight);
+    const top = marker.offsetTop, left = marker.offsetLeft;
+    if (top < ui.ed.scrollTop || top + height > ui.ed.scrollTop + ui.ed.clientHeight)
+      ui.ed.scrollTop = Math.max(0,top - ui.ed.clientHeight / 2);
+    if (!wrap && (left < ui.ed.scrollLeft || left + 16 > ui.ed.scrollLeft + ui.ed.clientWidth))
+      ui.ed.scrollLeft = Math.max(0,left - ui.ed.clientWidth / 2);
+    mirror.replaceChildren(); render();
+  }
+  async function gotoMatch(delta) {
+    if (search.revision !== doc.revision) await runFind();
+    if (!search.matches.length) { toast('Eşleşme bulunamadı.'); return; }
+    search.index = search.index < 0 ? (delta > 0 ? 0 : search.matches.length - 1) :
+      (search.index + delta + search.matches.length) % search.matches.length;
+    const [start,end] = search.matches[search.index];
+    ui.ed.focus({preventScroll:true}); ui.ed.setSelectionRange(start,end); revealOffset(start); updateCount(); render();
+  }
+  async function replaceAll() {
+    if (!ready || updating || !ui.sTxt.value) { toast('Aranacak metin girin.'); return false; }
+    const documentId = doc.id, revision = doc.revision, generation = search.generation;
+    const [from,to] = search.scope || [0,doc.text.length];
+    const selection = [ui.ed.selectionStart,ui.ed.selectionEnd];
+    cancelJob('find');
+    try {
+      const result = await runJob('replace',searchPayload('replace'));
+      if (updating || doc.id !== documentId || doc.revision !== revision || search.generation !== generation) {
+        toast('Belge veya arama değiştiği için eski sonuç uygulanmadı.'); return false;
+      }
+      if (!result.count) { toast('Eşleşme bulunamadı.'); return false; }
+      const nextSelection = search.scope ? [from,from + result.text.length] :
+        [Math.min(selection[0],result.text.length),Math.min(selection[0],result.text.length)];
+      clearScope();
+      if (!replaceRange(result.text,from,to,nextSelection)) return false;
+      toast(result.count + ' eşleşme değiştirildi.'); return true;
+    } catch (error) { if (error.name !== 'AbortError') reportError(error); return false; }
+  }
+  function toggleSearch(force) {
+    const show = force ?? ui.searchPanel.hidden;
+    ui.searchPanel.hidden = !show; ui.btnSearch.setAttribute('aria-expanded',String(show));
+    invalidateSearch();
+    if (show) { ui.sTxt.focus(); ui.sTxt.select(); } else ui.ed.focus();
+  }
+  function indentSelection(dedent) {
+    const text = doc.text, start = ui.ed.selectionStart, end = ui.ed.selectionEnd;
+    if (!dedent && start === end) { replaceRange(INDENT,start,end); return; }
+    const first = lineStart(text,start);
+    const lastPosition = end > start && text[end - 1] === '\n' ? end - 1 : end;
+    let last = text.indexOf('\n',lastPosition); if (last < 0) last = text.length;
+    let firstDelta = 0, delta = 0;
+    const replacement = text.slice(first,last).split('\n').map((line,index) => {
+      const removed = dedent ? (line.match(/^(\t| {1,2})/)?.[0].length || 0) : 0;
+      const change = dedent ? -removed : INDENT.length;
+      if (index === 0) firstDelta = change;
+      delta += change;
+      return dedent ? line.slice(removed) : INDENT + line;
+    }).join('\n');
+    const newStart = start === first ? first : Math.max(first,start + firstDelta);
+    replaceRange(replacement,first,last,[newStart,Math.max(newStart,end + delta)]);
+  }
+  const PAIRS = {'(':')','[':']','{':'}','"':'"',"'":"'",'`':'`'};
+  function autoInput(text) {
+    if (!pairsEnabled) return false;
+    const start = ui.ed.selectionStart, end = ui.ed.selectionEnd, value = doc.text;
+    if (text === '\n') {
+      const indentation = value.slice(lineStart(value,start),start).match(/^[ \t]*/)[0];
+      const opening = value[start - 1];
+      const bracket = ['(','[','{'].includes(opening);
+      const paired = bracket && value[end] === PAIRS[opening];
+      const body = '\n' + indentation + (bracket ? INDENT : '');
+      if (body === '\n' && !paired) return false;
+      return replaceRange(body + (paired ? '\n' + indentation : ''),start,end,[start + body.length,start + body.length]);
+    }
+    if (start === end && Object.values(PAIRS).includes(text) && value[start] === text) {
+      ui.ed.setSelectionRange(start + 1,start + 1); render(); return true;
+    }
+    if (!PAIRS[text]) return false;
+    if (start !== end) return replaceRange(text + value.slice(start,end) + PAIRS[text],start,end,[start + 1,end + 1]);
+    if (/[\p{L}\p{N}_]/u.test(value[start] || '') ||
+        /["'`]/.test(text) && /[\p{L}\p{N}_\\]/u.test(value[start - 1] || '')) return false;
+    return replaceRange(text + PAIRS[text],start,end,[start + 1,start + 1]);
+  }
+
+  function applyWrap(on, persistSetting = false) {
+    ui.ed.classList.toggle('wrap',on); document.body.classList.toggle('wrap',on);
+    ui.ed.wrap = on ? 'soft' : 'off'; ui.btnWrap.setAttribute('aria-pressed',String(on));
+    if (persistSetting) setSetting('wrap',on); render();
+  }
+  function applyTheme(dark, persistSetting = false) {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    $('themeColor').content = dark ? '#252526' : '#f8f9fa';
+    $('btnTheme').setAttribute('aria-pressed',String(dark));
+    if (persistSetting) setSetting('theme',dark ? 'dark' : 'light');
+  }
+  async function showDrafts() {
+    try {
+      const records = await Store.list();
+      ui.draftList.replaceChildren();
+      for (const record of records) {
+        const row = document.createElement('div'); row.className = 'draft-row';
+        const label = document.createElement('span');
+        label.textContent = `${record.name} · ${new Date(record.savedAt).toLocaleString('tr-TR')} · ${record.text.length} birim`;
+        const open = document.createElement('button'); open.type = 'button'; open.textContent = 'Kurtar';
+        open.onclick = async () => {
+          if (busySwitch || busySave || updating || !canSwitch()) return;
+          busySwitch = true; const revision = doc.revision;
+          try {
+            await preserveCurrent();
+            if (doc.revision !== revision) throw new Error('Belge değişti; kurtarma iptal edildi.');
+            const {text,name,encoding,bom,eol} = record;
+            commitDocument({text,name,encoding,bom,eol,snapshot:null});
+            ui.draftDialog.close(); toast('Taslak kopyası kurtarıldı; özgün taslak korundu.');
+          } catch (error) { reportError(error); } finally { busySwitch = false; }
+        };
+        const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Sil';
+        remove.onclick = async () => {
+          if (record.id === doc.id) { toast('Açık belgenin etkin taslağı silinemez.'); return; }
+          if (!confirm('Bu taslak kalıcı olarak silinsin mi? ' + record.name)) return;
+          try { await Store.remove(record.id); row.remove(); } catch { toast('Taslak tüm depolardan silinemedi. Yeniden deneyin.'); }
+        };
+        row.append(label,open,remove); ui.draftList.append(row);
+      }
+      if (!records.length) ui.draftList.textContent = 'Kayıtlı taslak yok.';
+      if (!ui.draftDialog.open) ui.draftDialog.showModal();
+    } catch (error) { reportError(error); }
+  }
+  async function requestUpdate() {
+    if (!waitingWorker || busySave || busySwitch || updating) return;
+    let draftProtected = false;
+    updating = true; ui.ed.readOnly = true; ui.fName.disabled = true; ui.extSelect.disabled = true;
+    invalidateSearch();
+    try {
+      await persist();
+      draftProtected = true;
+      pendingReload = true;
+      waitingWorker.postMessage({type:'SKIP_WAITING'});
+      setTimeout(() => {
+        if (!updating) return;
+        pendingReload = false; updating = false; ui.ed.readOnly = false; ui.fName.disabled = false; ui.extSelect.disabled = false;
+        invalidateSearch();
+        toast('Güncelleme henüz tamamlanmadı. Taslak korundu; yeniden deneyebilirsiniz.');
+      },8000);
+    } catch {
+      toast(draftProtected
+        ? 'Taslak korundu ancak güncelleme başlatılamadı. Yeniden deneyin.'
+        : 'Taslak korunamadığı için güncelleme uygulanmadı. Önce dosyaya kaydedin.');
+      pendingReload = false; updating = false; ui.ed.readOnly = false; ui.fName.disabled = false; ui.extSelect.disabled = false;
+      invalidateSearch();
+    }
+  }
+  function setupServiceWorker() {
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    const announce = worker => { waitingWorker = worker; ui.updateButton.hidden = false; };
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange',() => {
+      // Only this page's successful, explicit update request permits reload.
+      if (pendingReload && !reloading) { reloading = true; location.reload(); }
+    });
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(registration => {
+      if (registration.waiting) announce(registration.waiting);
+      registration.addEventListener('updatefound',() => {
+        const worker = registration.installing;
+        worker?.addEventListener('statechange',() => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) announce(worker);
+        });
+      });
+    }).catch(() => toast('Çevrimdışı kullanım etkinleştirilemedi. Dosya düzenleme çalışmaya devam eder.'));
+  }
+
+  const actions = {
+    open:openDialog, save:() => save(false), 'save-as':() => save(true), new:newDocument,
+    wrap:() => applyWrap(!ui.ed.classList.contains('wrap'),true), search:() => toggleSearch(),
+    'close-search':() => toggleSearch(false), 'find-next':() => gotoMatch(1), 'find-prev':() => gotoMatch(-1),
+    replace:replaceAll, theme:() => applyTheme(document.documentElement.dataset.theme !== 'dark',true),
+    undo:() => undo(), redo:() => undo(true), drafts:showDrafts, update:requestUpdate,
+    'close-drafts':() => ui.draftDialog.close(),
+    tab:() => { tabIndent = !tabIndent; ui.btnTab.setAttribute('aria-pressed',String(tabIndent)); setSetting('tabIndent',tabIndent); },
+    pairs:() => { pairsEnabled = !pairsEnabled; ui.btnPairs.setAttribute('aria-pressed',String(pairsEnabled)); setSetting('pairs',pairsEnabled); }
+  };
+  document.addEventListener('click',event => {
+    const button = event.target.closest('[data-action]');
+    if (!button || button.disabled || !ready || updating) return;
+    const action = actions[button.dataset.action];
+    if (action) { event.preventDefault(); Promise.resolve().then(action).catch(reportError); }
+  });
+  let beforeSelection = [0,0];
+  ui.ed.addEventListener('beforeinput',event => {
+    beforeSelection = [ui.ed.selectionStart,ui.ed.selectionEnd];
+    if (!ready || updating) { event.preventDefault(); return; }
+    if (event.inputType === 'historyUndo' || event.inputType === 'historyRedo') {
+      event.preventDefault(); undo(event.inputType === 'historyRedo'); return;
+    }
+    if (!event.cancelable || event.isComposing) return;
+    if (event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph') {
+      if (autoInput('\n')) event.preventDefault();
+    } else if (event.inputType === 'insertText' && event.data?.length === 1 && autoInput(event.data)) event.preventDefault();
+  });
+  ui.ed.addEventListener('input',() => {
+    if (!ready || updating) { ui.ed.value = doc.text; return; }
+    const selection = [ui.ed.selectionStart,ui.ed.selectionEnd];
+    if (!setText(ui.ed.value,selection,true,beforeSelection)) ui.ed.value = doc.text;
+  });
+  ui.ed.addEventListener('scroll',renderGutter,{passive:true});
+  document.addEventListener('selectionchange',() => { if (document.activeElement === ui.ed) render(); });
+  window.addEventListener('resize',render);
+  ui.fName.addEventListener('input',() => rename(ui.fName.value));
+  ui.extSelect.addEventListener('change',() => {
+    const part = splitName(doc.name), extension = ui.extSelect.value;
+    rename(part.base + (extension ? '.' + extension : ''));
+  });
+  for (const control of [ui.sTxt,ui.cCase,ui.cReg]) control.addEventListener('input',invalidateSearch);
+  ui.rTxt.addEventListener('input',invalidateSearch);
+  ui.cScope.addEventListener('change',() => {
+    if (ui.cScope.checked) {
+      const from = ui.ed.selectionStart, to = ui.ed.selectionEnd;
+      if (from === to) { ui.cScope.checked = false; toast('Önce editörde bir alan seçin.'); return; }
+      search.scope = [from,to];
+    } else search.scope = null;
+    invalidateSearch();
+  });
+  ui.fileIn.addEventListener('change',async () => {
+    const file = ui.fileIn.files?.[0]; ui.fileIn.value = '';
+    if (file) await openFile(file);
+  });
+  document.addEventListener('keydown',event => {
+    if (!ready || updating || event.isComposing || event.defaultPrevented) return;
+    const mod = event.ctrlKey || event.metaKey, key = event.key.toLowerCase();
+    if (mod && !event.altKey) {
+      if (['s','o','f'].includes(key)) {
+        event.preventDefault();
+        if (key === 's') save(event.shiftKey); else if (key === 'o') openDialog(); else toggleSearch(true);
+        return;
+      }
+      if (event.target === ui.ed && (key === 'z' || key === 'y')) {
+        event.preventDefault(); undo(key === 'y' || event.shiftKey); return;
+      }
+    }
+    if (event.key === 'Escape') {
+      if (ui.draftDialog.open) return;
+      if (!ui.searchPanel.hidden) toggleSearch(false);
+      else if (event.target === ui.ed) $('openButton').focus();
+      return;
+    }
+    if ((event.target === ui.sTxt || event.target === ui.rTxt) && event.key === 'Enter') {
+      event.preventDefault();
+      if (event.target === ui.rTxt && mod) replaceAll(); else gotoMatch(event.shiftKey ? -1 : 1);
+    }
+    if (event.target === ui.ed && event.key === 'Tab' && tabIndent && !mod && !event.altKey) {
+      event.preventDefault(); indentSelection(event.shiftKey);
+    }
+  });
+  document.querySelector('.toolbar').addEventListener('keydown',event => {
+    if (!['ArrowLeft','ArrowRight'].includes(event.key) || event.target.tagName !== 'BUTTON') return;
+    const buttons = [...event.currentTarget.querySelectorAll('button')].filter(button => !button.hidden && !button.disabled);
+    const current = buttons.indexOf(event.target); if (current < 0) return;
+    event.preventDefault(); buttons[(current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length].focus();
+  });
+  let dragDepth = 0;
+  const hasFiles = event => Array.from(event.dataTransfer?.types || []).includes('Files');
+  document.addEventListener('dragenter',event => {
+    if (hasFiles(event)) { event.preventDefault(); dragDepth++; document.body.classList.add('dragging'); }
+  });
+  document.addEventListener('dragover',event => { if (hasFiles(event)) event.preventDefault(); });
+  document.addEventListener('dragleave',() => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+  document.addEventListener('drop',async event => {
+    if (!hasFiles(event)) return;
+    event.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+    const file = event.dataTransfer.files[0]; // Capture while the drop data store is readable.
+    const item = event.dataTransfer.items?.[0];
+    let handle = null;
+    try { if (item?.getAsFileSystemHandle) handle = await item.getAsFileSystemHandle(); } catch { /* File remains available. */ }
+    if (file) await openFile(file,handle?.kind === 'file' ? handle : null);
+  });
+  window.addEventListener('beforeunload',event => {
+    emergencyJournal();
+    if (!pendingReload && dirty()) { event.preventDefault(); event.returnValue = ''; }
+  });
+  document.addEventListener('visibilitychange',() => { if (document.visibilityState === 'hidden') emergencyJournal(); });
+  window.addEventListener('pagehide',emergencyJournal);
+
+  async function init() {
+    ui.ed.readOnly = true; document.body.setAttribute('aria-busy','true');
+    for (const extension of ['',...EXTENSIONS]) ui.extSelect.add(new Option(extension ? '.' + extension : 'Uzantısız',extension));
+    ui.fileIn.accept = Object.values(TYPES).flat().join(',') + ',text/*';
+    applyTheme(setting('theme') ? setting('theme') === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
+    applyWrap(setting('wrap') === 'true');
+    ui.btnTab.setAttribute('aria-pressed',String(tabIndent)); ui.btnPairs.setAttribute('aria-pressed',String(pairsEnabled));
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    const themeChanged = event => { if (!setting('theme')) applyTheme(event.matches); };
+    if (media.addEventListener) media.addEventListener('change',themeChanged); else media.addListener(themeChanged);
+    let lastId = null;
+    try { lastId = sessionStorage.getItem(NS + 'last-draft'); } catch { /* Latest draft is a recovery candidate. */ }
+    try {
+      await Store.migrate();
+      const records = await Store.list();
+      const record = records.find(item => item.id === lastId) || records[0];
+      if (record && new URL(location.href).searchParams.get('new') !== '1') {
+        const {text,name,encoding,bom,eol} = record;
+        commitDocument({text,name,encoding,bom,eol,snapshot:null});
+        toast('Taslak kopyası geri yüklendi. Önceki kayıt Taslaklar bölümünde korunuyor.');
+      } else commitDocument();
+    } catch (error) { commitDocument(); draftError = true; renderStorage(); reportError(error); }
+    ready = true; ui.ed.readOnly = false; document.body.removeAttribute('aria-busy'); render();
+    const url = new URL(location.href);
+    if (url.searchParams.has('new')) { url.searchParams.delete('new'); historyURL(url); }
+    setupServiceWorker();
+  }
+  function historyURL(url) { try { window.history.replaceState(null,'',url); } catch { /* file:// may reject replacement. */ } }
+  const initialization = init();
+  if (window.launchQueue?.setConsumer) window.launchQueue.setConsumer(async parameters => {
+    await initialization;
+    try {
+      if (parameters.files?.length) {
+        const handle = parameters.files[0]; await openFile(await handle.getFile(),handle);
+      } else if (parameters.targetURL && new URL(parameters.targetURL).searchParams.get('new') === '1') await newDocument();
+    } catch (error) { reportError(error); }
+  });
+})();
+</script>
+</body>
+</html>
